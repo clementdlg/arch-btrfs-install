@@ -3,11 +3,15 @@
 # Exit on failure
 set -xeuo pipefail
 
-# trap_msg='echo "[EXIT] failed at '\${FUNCNAME[0]}' "; cleanup;'
-# trap "$trap_msg" ERR
+trap_msg='echo "[EXIT] failed at '\${FUNCNAME[0]}' "; cleanup /dev/mapper/main;'
 
 cleanup() {
-	echo "[CLEANUP] Unmounting LINUX..."  
+	if lsblk | awk '{ print $7 }' | grep '/mnt'; then
+		echo "[CLEANUP] Unmounting LINUX..."  
+		umount -R /mnt
+	fi
+
+	echo "[CLEANUP] Closing CRYPT-FS..."  
 	cryptsetup luksClose $1
 }
 
@@ -16,11 +20,12 @@ silent() {
 }
 
 log() {
+	trap "$trap_msg" ERR
 	echo "[INFO] $1" | tee -a "$LOG_FILE"
 }
 
 source_files() {
-	trap 'echo "[EXIT] failed at '\${FUNCNAME[0]}' "; cleanup;' ERR
+	trap "$trap_msg" ERR
 
 	path="sources"
 	[[ -d "$path" ]]
@@ -32,7 +37,7 @@ source_files() {
 }
 
 source_config() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' "; cleanup;' ERR
+	trap "$trap_msg" ERR
 
 	local config="arch-btrfs-install.conf"
 
@@ -41,7 +46,7 @@ source_config() {
 
 
 main() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' "; cleanup;' ERR
+	trap "$trap_msg" ERR
 
 	source_files
 

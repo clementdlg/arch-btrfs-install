@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 disk_part_util() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' "' ERR
+	trap "$trap_msg" ERR
 	sgdisk -n$1::"$2" \
 			-t$1:"$3" \
 			-c$1:"$4" \
@@ -9,14 +9,14 @@ disk_part_util() {
 }
 
 partitionning_disk() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' "' ERR
+	trap "$trap_msg" ERR
 
 	[[ -b "$_MAIN_DISK" ]]
 
 	# Wipe disk
 	sgdisk -o ${_MAIN_DISK}
 
-	#              num; size; type; name
+	# partitions ; num; size; type; name
 	disk_part_util   1   +2G "EF00" "ESP"
 	disk_part_util   2   +4G "8200" "SWAP"
 	disk_part_util   3    "" "8300" "LINUX"
@@ -27,7 +27,7 @@ partitionning_disk() {
 }
 
 formatting_disk() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' "; cleanup /dev/mapper/main;' ERR
+	trap "$trap_msg" ERR
 
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
 	swap=$(fdisk -x ${_MAIN_DISK} | grep 'SWAP' | cut -d' ' -f1)
@@ -48,7 +48,7 @@ formatting_disk() {
 }
 
 mount_btrfs() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' "; cleanup /dev/mapper/main;' ERR
+	trap "$trap_msg" ERR
 
 	args="noatime,ssd,compress=zstd,space_cache=v2,discard=async,subvol="
 	mount -o "$args$1" \
@@ -57,7 +57,7 @@ mount_btrfs() {
 }
 
 mount_fs() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' "; cleanup /dev/mapper/main;' ERR
+	trap "$trap_msg" ERR
 
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
 

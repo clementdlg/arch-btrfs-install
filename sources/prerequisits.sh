@@ -2,7 +2,7 @@
 
 
 verify_config_keys() {
-	trap 'echo "[EXIT] failed at '${FUNCNAME[0]}' : $key not found"' ERR
+	trap "$trap_msg" ERR
 
 	export valid_keys=(
 		"_USER"
@@ -27,14 +27,14 @@ verify_config_keys() {
 
 
 check_boot_mode(){
-	trap 'echo "[EXIT] failed to '${FUNCNAME[0]}' : BIOS is not supported, use UEFI"' ERR
+	trap "$trap_msg" ERR
 
 	silent cat /sys/firmware/efi/fw_platform_size
 }
 
 
 check_connection(){
-	trap 'echo "[EXIT] failed to '${FUNCNAME[0]}' : no internet"' ERR
+	trap "$trap_msg" ERR
 
 	ip="1.1.1.1"
 	silent ping -c3 $ip
@@ -42,14 +42,14 @@ check_connection(){
 
 
 set_time() {
-	trap 'echo "[EXIT] failed to '${FUNCNAME[0]}'"' ERR
+	trap "$trap_msg" ERR
 	timedatectl set-timezone "$_TIMEZONE"
 	timedatectl set-ntp true
 }
 
 
 update_repos() {
-	trap 'echo "[EXIT] failed to '${FUNCNAME[0]}'"' ERR
+	trap "$trap_msg" ERR
 
 	mirror_list="/etc/pacman.d/mirrorlist"
 	silent reflector -c "$_COUNTRY" -a 12 --sort rate --save "$mirror_list"
@@ -59,7 +59,7 @@ update_repos() {
 
 
 display_warning() {
-	trap 'printf "[EXIT] Operation canceled\n[EXIT] Check the configuration file\n"' ERR
+	trap "$trap_msg" ERR
 
 	prompt="[PROMPT] Are you sure you want to proceed?"
 
