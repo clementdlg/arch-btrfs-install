@@ -25,7 +25,6 @@ log() {
 }
 
 source_files() {
-	trap "$trap_msg" ERR
 
 	path="sources"
 	[[ -d "$path" ]]
@@ -56,6 +55,7 @@ main() {
 	check_boot_mode
 	check_connection
 	set_time
+	update_repos
 	display_warning
 
 	# disks
@@ -63,7 +63,11 @@ main() {
 	formatting_disk
 	mount_fs
 
-	# bootstrap
+	bootstrap
+	set_locale
+	host_settings
+	install_system_utils
+	systemd_services
 
 }
 
