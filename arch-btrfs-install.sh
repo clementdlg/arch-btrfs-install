@@ -13,6 +13,8 @@ cleanup() {
 
 	echo "[CLEANUP] Closing CRYPT-FS..."  
 	cryptsetup luksClose $1
+
+	# echo "[END] ARCH-INSTALL has failed. Chech the logs at ${WORKDIR}"  
 }
 
 silent() {
@@ -29,8 +31,8 @@ source_files() {
 	path="sources"
 	[[ -d "$path" ]]
 
-	for file in "$path"/*; do
-		[[ -f "$file" ]]
+	for file in "$path"/* ; do
+		[[ -f "$file" && "$file" == *".sh" ]]
 		source "$file"
 	done
 }
@@ -52,11 +54,11 @@ main() {
 	# prerequisits
 	source_config
 	verify_config_keys
+	display_warning
 	check_boot_mode
 	check_connection
 	set_time
 	update_repos
-	display_warning
 
 	# disks
 	partitionning_disk
@@ -68,6 +70,11 @@ main() {
 	host_settings
 	install_system_utils
 	systemd_services
+
+	ramfs
+	grub_install
+	# grub_cfg
+
 
 }
 

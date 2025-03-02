@@ -67,7 +67,3 @@ grub_cfg() {
 	arch grub-mkconfig -o /boot/grub/grub.cfg
 }
 
-ramfs
-grub_install
-grub_cfg
-
