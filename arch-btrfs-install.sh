@@ -3,7 +3,7 @@
 # Exit on failure
 set -xeuo pipefail
 
-trap_msg='echo "[EXIT] failed at '\${FUNCNAME[0]}' "; cleanup /dev/mapper/main;'
+trap_msg='log e "Command '\$BASH_COMMAND' has failed"; log e "Failed to '\${FUNCNAME[0]}'";  cleanup /dev/mapper/main;'
 
 cleanup() {
 	if lsblk | awk '{ print $7 }' | grep '/mnt'; then
@@ -23,7 +23,26 @@ silent() {
 
 log() {
 	trap "$trap_msg" ERR
-	echo "[INFO] $1" | tee -a "$LOG_FILE"
+
+	msg="$2"
+	[[ ! -z "$msg" ]]
+
+	timestamp="[$(date +%y-%m-%d\ %H:%M:%S)]"
+
+	label=""
+	case "$1" in
+		c)
+		label="[CLEANUP]"
+		;;
+		e)
+		label="[ERROR]"
+		;;
+		*)
+		label="[INFO]"
+		;;
+	esac
+	echo "$timestamp$label $msg"
+	# echo "[INFO] $1" | tee -a "$LOG_FILE"
 }
 
 source_files() {
@@ -52,6 +71,7 @@ arch() {
 main() {
 	trap "$trap_msg" ERR
 
+	mkdir /no/such/file/or/directory
 	source_files
 
 	# Prerequisits

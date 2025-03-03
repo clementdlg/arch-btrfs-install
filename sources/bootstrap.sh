@@ -1,5 +1,13 @@
 bootstrap() {
-	pacstrap -K /mnt base base-devel linux linux-firmware intel-ucode vim
+	pacstrap -K /mnt \
+		base \
+		base-devel \
+		linux \
+		linux-firmware \
+		intel-ucode \
+		vim
+
+	genfstab -U /mnt >> /mnt/etc/fstab
 }
 
 set_locale() {
