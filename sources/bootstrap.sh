@@ -19,12 +19,12 @@ host_settings() {
 
 	arch "echo \"${_HOSTNAME}\" > /etc/hostname"
 
-	arch "echo '127.0.0.1   localhost' > $hosts"
-	arch "echo '::1         localhost' > $hosts"
-	arch "echo \"127.0.0.1   ${_HOSTNAME}.localdomain ${_HOSTNAME}\" > $hosts"
+	arch "echo '127.0.0.1   localhost' >> $hosts"
+	arch "echo '::1         localhost' >> $hosts"
+	arch "echo \"127.0.0.1   ${_HOSTNAME}.localdomain ${_HOSTNAME}\" >> $hosts"
 
-	arch "echo \"KEYMAP=${_KEYMAP}\" > $console"
-	arch "echo FONT='ter-228b' > $console"
+	arch "echo \"KEYMAP=${_KEYMAP}\" >> $console"
+	arch "echo FONT='ter-228b' >> $console"
 }
 
 install_system_utils() {
