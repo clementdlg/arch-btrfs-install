@@ -45,13 +45,16 @@ source_config() {
 	source "$config"
 }
 
+arch() {
+	arch-chroot /mnt bash -c "$@"
+}
 
 main() {
 	trap "$trap_msg" ERR
 
 	source_files
 
-	# prerequisits
+	# Prerequisits
 	source_config
 	verify_config_keys
 	display_warning
@@ -60,21 +63,27 @@ main() {
 	set_time
 	update_repos
 
-	# disks
+	# Disks
 	partitionning_disk
 	formatting_disk
 	mount_fs
 
+	# Os settings
 	bootstrap
 	set_locale
 	host_settings
 	install_system_utils
 	systemd_services
+	add_user
 
+	# Bootloader
 	ramfs
 	grub_install
-	# grub_cfg
+	grub_cfg
 
+	# finish
+	# umount -R /mnt
+	# reboot
 
 }
 

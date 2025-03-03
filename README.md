@@ -1,8 +1,11 @@
 # arch-btrfs-install
 
 ## TODO
+- [ ] Fix :
+    - [ ] Error handling if disk is already mounted
+    - [ ] Create user home directory
 - [ ] finish implementing the docs
-    - [ ] GRUB setup
+    - [x] GRUB setup
     - [ ] User setup
     - [ ] post-install
 - [ ] Logging
