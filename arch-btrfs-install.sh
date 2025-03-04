@@ -109,7 +109,7 @@ main() {
 	partitionning_disk
 	formatting_disk
 	mount_fs
-	mkdir /no/such/file/or/directory
+	# mkdir /no/such/file/or/directory
 
 	# Os settings
 	bootstrap
