@@ -38,9 +38,11 @@ verify_config_keys() {
 
 check_boot_mode(){
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
 
 	silent cat /sys/firmware/efi/fw_platform_size
 
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
 

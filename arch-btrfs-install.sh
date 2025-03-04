@@ -1,20 +1,31 @@
 #!/usr/bin/env bash
 
-# Exit on failure
+# The script will exit at the first failure
 set -euo pipefail
 
-trap_msg='log e "Failed command : <'\$BASH_COMMAND'>"; log e "Failed function : '\${FUNCNAME[0]}'";  cleanup /dev/mapper/main;'
+# used for loging
+green="\e[32m"
+yellow="\e[33m"
+red="\e[31m"
+purple="\033[95m"
+reset="\e[0m"
 
+# This will be executed upon failure 
+trap_msg='log e "$red[LINE $LINENO][FUNCTION ${FUNCNAME[0]}]$reset \
+Failed to execute : <'\$BASH_COMMAND'>" \
+;  cleanup /dev/mapper/main;'
+
+# public functions
 source_files() {
 	trap "$trap_msg" ERR
 
 	path="sources"
 	[[ -d "$path" ]]
 
-	source "$path/prerequisits.sh"
-	source "$path/disks.sh"
-	source "$path/bootstrap.sh"
-	source "$path/bootloader.sh"
+	source "$path/prerequisits.sh" || false
+	source "$path/disks.sh" || false
+	source "$path/bootstrap.sh" || false
+	source "$path/bootloader.sh" || false
 
 	log i "${FUNCNAME[0]} : success"
 }
@@ -34,10 +45,15 @@ silent() {
 
 create_workdir() {
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
 
-	mkdir -p "$_WORKING_DIR"
-	echo "# arch-btrfs-install run of $(date)" > ${_LOGFILE}
+	mkdir -p "$_WORKING_DIR" # create directory
 
+	# create/overwrite log files
+	echo "" > "$_LOGFILE"
+	echo "" > "$_WORKING_DIR/$_STATE_FILE"
+
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
 
@@ -46,31 +62,55 @@ arch() {
 }
 
 log() {
-	trap "$trap_msg" ERR
-
-	color="\e[32m"
-	yellow="\e[33m"
-	red="\e[31m"
-	reset="\e[0m"
-
 	msg="$2"
 	[[ ! -z "$msg" ]]
 
 	timestamp="[$(date +%H:%M:%S)]"
 
-	label="[INFO]"
+	label=""
 	case "$1" in
 		c) label="[CLEANUP]" ; color="$yellow" ;;
 		e) label="[ERROR]" ; color="$red" ;;
 		x) label="[EXIT]" ; color="$yellow" ;;
+		d) label="[DEBUG]" ; color="$purple" ;;
+		i) label="[INFO]" ; color="$green" ;;
 	esac
 
 	log="$timestamp$color$label$reset $msg "
 	echo -e "$log"
 
 	log="$timestamp$label $msg "
+
+	[[ ! -f ${_LOGFILE} ]] && return
 	echo "$log" >> ${_LOGFILE}
 }
+
+check_state() {
+	trap "$trap_msg" ERR
+
+	fstate="$_WORKING_DIR/$_STATE_FILE"
+	func_name="$1"
+
+	[[ -f "$fstate" ]] || return 1
+
+	grep "$func_name" "$fstate" || return 1
+
+	log i "Recovered state for $func_name, skipping"
+	return 0
+
+}
+
+update_state() {
+	trap "$trap_msg" ERR
+
+	fstate="$_WORKING_DIR/$_STATE_FILE"
+	func_name="$1"
+
+	[[ -f "$fstate" ]] || return 1
+
+	echo "$func_name" >> "$fstate"
+}
+
 
 cleanup() {
 	set +eu
@@ -88,6 +128,15 @@ cleanup() {
 	exit
 }
 
+# hello() {
+# 	trap "$trap_msg" ERR
+# 	check_state "${FUNCNAME[0]}" && return
+#
+# 	log i "Hello world!"
+#
+# 	update_state "${FUNCNAME[0]}" 
+# 	log i "${FUNCNAME[0]} : success"
+# }
 
 main() {
 	trap "$trap_msg" ERR
@@ -100,8 +149,9 @@ main() {
 	# Prerequisits
 	verify_config_keys
 	display_warning
-	check_boot_mode
 	check_connection
+	check_boot_mode
+	# false # exit script
 	set_time
 	update_repos
 
@@ -109,7 +159,6 @@ main() {
 	partitionning_disk
 	formatting_disk
 	mount_fs
-	# mkdir /no/such/file/or/directory
 
 	# Os settings
 	bootstrap
@@ -125,8 +174,9 @@ main() {
 	grub_cfg
 
 	# finish
-	# umount -R /mnt
-	# reboot
+	umount -R /mnt
+	reboot
+	rm -r "${_WORKDIR}"
 
 }
 

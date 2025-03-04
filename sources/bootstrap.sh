@@ -1,4 +1,6 @@
 bootstrap() {
+	trap "$trap_msg" ERR
+
 	pacstrap -K /mnt \
 		base \
 		base-devel \
@@ -8,6 +10,8 @@ bootstrap() {
 		vim
 
 	genfstab -U /mnt >> /mnt/etc/fstab
+
+	log i "${FUNCNAME[0]} : success"
 }
 
 set_locale() {
