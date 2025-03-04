@@ -2,7 +2,7 @@
 
 disk_part_util() {
 	trap "$trap_msg" ERR
-	sgdisk -n$1::"$2" \
+	silent sgdisk -n$1::"$2" \
 			-t$1:"$3" \
 			-c$1:"$4" \
 			${_MAIN_DISK}
@@ -11,19 +11,22 @@ disk_part_util() {
 partitionning_disk() {
 	trap "$trap_msg" ERR
 
-	[[ -b "$_MAIN_DISK" ]]
+	if [[ ! -b "$_MAIN_DISK" ]]; then
+		log e "Disk $_MAIN_DISK does not exist"
+		false
+	fi
 
 	# Wipe disk
-	sgdisk -o ${_MAIN_DISK}
+	silent sgdisk -o ${_MAIN_DISK}
 
 	# partitions ; num; size; type; name
 	disk_part_util   1   +2G "EF00" "ESP"
 	disk_part_util   2   +4G "8200" "SWAP"
 	disk_part_util   3    "" "8300" "LINUX"
 
-	sgdisk -p $_MAIN_DISK
+	silent sgdisk -p $_MAIN_DISK
 
-	gdisk -l ${_MAIN_DISK}
+	log i "${FUNCNAME[0]} : success"
 }
 
 formatting_disk() {
@@ -33,18 +36,18 @@ formatting_disk() {
 	swap=$(fdisk -x ${_MAIN_DISK} | grep 'SWAP' | cut -d' ' -f1)
 	linux=$(fdisk -x ${_MAIN_DISK} | grep 'LINUX' | cut -d' ' -f1)
 
-	mkfs.fat -F 32 $esp # create boot partition
+	silent mkfs.fat -F 32 $esp # create boot partition
 
-	mkswap $swap # create swap partition
+	silent mkswap $swap # create swap partition
 	# swapon $swap # enable swap partition
 
-	echo -n "$_CRYPT_PASSPHRASE" | cryptsetup luksFormat -d /dev/stdin $linux
+	echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksFormat -d /dev/stdin $linux
 
-	echo -n "$_CRYPT_PASSPHRASE" | cryptsetup luksOpen -d /dev/stdin $linux main
+	echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksOpen -d /dev/stdin $linux main
 
-	mkfs.btrfs /dev/mapper/main
+	silent mkfs.btrfs /dev/mapper/main
 
-	lsblk
+	log i "${FUNCNAME[0]} : success"
 }
 
 mount_btrfs() {
@@ -54,7 +57,7 @@ mount_btrfs() {
 	mountpoint="$2"
 	args="noatime,ssd,compress=zstd,space_cache=v2,discard=async,subvol="
 
-	mount --mkdir -o "$args$subvol" \
+	silent mount --mkdir -o "$args$subvol" \
 		/dev/mapper/main \
 		"/mnt$mountpoint"
 }
@@ -93,7 +96,10 @@ mount_fs() {
 
 	# create each subvolume
 	for subvol in "${subvols[@]}"; do
-		btrfs subvolume create "/mnt/$subvol"
+		if ! silent btrfs subvolume create "/mnt/$subvol"; then
+			log e "Failed to create btrfs subvolume : $subvol"
+			false
+		fi
 	done
 
 	umount /mnt # unmount before remounting with appropriate options
@@ -105,5 +111,5 @@ mount_fs() {
 
 	mount --mkdir "$esp" /mnt/boot
 
-	lsblk
+	log i "${FUNCNAME[0]} : success"
 }
