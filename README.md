@@ -5,19 +5,19 @@
 ## Documentation
 - I wrote this documentation to help me write this tool, 
 - this is basically the relevant arch wiki articles put together in the appropriate order
-- Configuration documentation (forthcoming)
+- Configuration file docs : (forthcoming)
 - Install : [here](docs/arch-v2.1-install.md)
 - Post Install : [here](docs/arch-v2.1-postinstall.md)
 
 
 ## How to use ?
-- Bootup on the arch ISO, found it [here](https://archlinux.org/download/)
+- Bootup on the arch ISO, download it [here](https://archlinux.org/download/)
 - run this command
 ```bash
 git clone https://github.com/clementdlg/arch-btrfs-install
 ```
 
-- Edit the configuration file
+- Edit the configuration file. 
 ```bash
 nano arch-btrfs-install.conf
 ```
