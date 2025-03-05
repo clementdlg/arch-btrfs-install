@@ -58,6 +58,8 @@ create_workdir() {
 }
 
 arch() {
+	trap "$trap_msg" ERR
+
 	silent arch-chroot /mnt bash -c "$@"
 }
 
@@ -170,7 +172,6 @@ main() {
 	host_settings
 	install_system_utils
 	add_user
-	false # exit script
 
 	# Bootloader
 	ramfs
