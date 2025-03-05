@@ -58,7 +58,7 @@ create_workdir() {
 }
 
 arch() {
-	arch-chroot /mnt bash -c "$@"
+	silent arch-chroot /mnt bash -c "$@"
 }
 
 log() {
@@ -155,12 +155,13 @@ main() {
 	# Disks
 	partitionning_disk
 	formatting_disk
+	create_btrfs_subvolumes
 	mount_fs
 
 	# Os settings
 	bootstrap
-	false # exit script
 	set_locale
+	# false # exit script
 	host_settings
 	install_system_utils
 	systemd_services

@@ -1,5 +1,33 @@
 #!/usr/bin/env bash
 
+# BTRFS subvolumes
+subvols=(
+	"@"
+	"@home"
+	"@var_log"
+	"@var_spool"
+	"@var_cache"
+	"@var_tmp"
+	"@var_lib_libvirt"
+	"@var_lib_docker"
+)
+
+# mountpoints for BTRFS subvolumes
+mountpoints=(
+	""
+	"/home"
+	"/var/log"
+	"/var/spool"
+	"/var/cache"
+	"/var/tmp"
+	"/var/lib/libvirt"
+	"/var/lib/docker"
+)
+
+# arrays must be the same size
+[[ "${#subvols[@]}" == "${#mountpoints[@]}" ]]
+
+
 disk_part_util() {
 	trap "$trap_msg" ERR
 	silent sgdisk -n$1::"$2" \
@@ -101,44 +129,41 @@ mount_fs() {
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
 	linux=$(fdisk -x ${_MAIN_DISK} | grep 'LINUX' | cut -d' ' -f1)
 
-	subvols=(
-		"@"
-		"@home"
-		"@var_log"
-		"@var_spool"
-		"@var_cache"
-		"@var_tmp"
-		"@var_lib_libvirt"
-		"@var_lib_docker"
-	)
-
-	mountpoints=(
-		""
-		"/home"
-		"/var/log"
-		"/var/spool"
-		"/var/cache"
-		"/var/tmp"
-		"/var/lib/libvirt"
-		"/var/lib/docker"
-	)
-
-	[[ "${#subvols[@]}" == "${#mountpoints[@]}" ]]
-
 	# ensure mountpoint is clean
 	if mount | silent grep /mnt; then
-		umount /mnt
+		silent umount /mnt
 	fi
 
 	# open the LUKS device if needed
-	if ! cryptsetup status /dev/mapper/main; then
+	if ! silent cryptsetup status /dev/mapper/main; then
 		echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksOpen -d /dev/stdin $linux main
 	fi
 
-	# mount the filesystem
-	mount /dev/mapper/main /mnt
+	# mount each subvolume
+	for i in "${!mountpoints[@]}"; do
+		mount_btrfs "${subvols[$i]}" "${mountpoints[$i]}"
+	done
 
-	# create each subvolume
+	silent mount --mkdir "$esp" /mnt/boot
+
+	log i "${FUNCNAME[0]} : success"
+}
+
+create_btrfs_subvolumes() {
+	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
+	linux=$(fdisk -x ${_MAIN_DISK} | grep 'LINUX' | cut -d' ' -f1)
+
+	# open the LUKS device if needed
+	if ! silent cryptsetup status /dev/mapper/main; then
+		echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksOpen -d /dev/stdin $linux main
+	fi
+
+	# mount raw LUKS device
+	silent mount /dev/mapper/main /mnt
+
+	##	Create all btrfs subvolumes	##
 	for subvol in "${subvols[@]}"; do
 		if ! silent btrfs subvolume create "/mnt/$subvol"; then
 			log e "Failed to create btrfs subvolume : $subvol"
@@ -146,14 +171,6 @@ mount_fs() {
 		fi
 	done
 
-	umount /mnt # unmount before remounting with appropriate options
-
-	# mount each subvolume
-	for i in "${!mountpoints[@]}"; do
-		mount_btrfs "${subvols[$i]}" "${mountpoints[$i]}"
-	done
-
-	mount --mkdir "$esp" /mnt/boot
-
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
