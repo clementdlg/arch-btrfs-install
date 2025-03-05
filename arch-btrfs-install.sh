@@ -113,7 +113,6 @@ update_state() {
 
 
 cleanup() {
-	set +eu
 	if lsblk | awk '{ print $7 }' | grep '/mnt'; then
 		log c "Unmounting partitions"
 		umount -R /mnt
@@ -148,10 +147,8 @@ main() {
 
 	# Prerequisits
 	verify_config_keys
-	display_warning
 	check_connection
 	check_boot_mode
-	# false # exit script
 	set_time
 	update_repos
 
@@ -159,6 +156,8 @@ main() {
 	partitionning_disk
 	formatting_disk
 	mount_fs
+	false # exit script
+	####### there is not clean output after here
 
 	# Os settings
 	bootstrap

@@ -58,48 +58,28 @@ check_connection(){
 
 set_time() {
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
 
 	timedatectl set-timezone "$_TIMEZONE"
 	timedatectl set-ntp true
 
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
 
 
 update_repos() {
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
 
 	mirror_list="/etc/pacman.d/mirrorlist"
 	silent reflector -c "$_COUNTRY" -a 12 --sort rate --save "$mirror_list" 2>/dev/null
 
 	silent pacman -Syy archlinux-keyring --noconfirm 2>/dev/null
 
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
 
 
-display_warning() {
-	trap "$trap_msg" ERR
 
-	prompt="[PROMPT] Are you sure you want to proceed?"
-
-	echo "###############################################"
-	echo "####                                       ####"
-	echo "####    YOU ARE ABOUT TO WIPE YOUR DISK    ####"
-	echo "####                                       ####"
-	echo "###############################################"
-	printf "\n"
-
-	fdisk -l /dev/vda
-	printf "\n\n"
-
-	log i "YOU ARE ABOUT TO WIPE OUT $_MAIN_DISK"
-	printf "\n"
-
-	read -p "$prompt ('YES/n'): " response
-	if [[ ! "$response" == "YES" ]]; then
-		log i "You did NOT wipe ${_MAIN_DISK}"
-		cleanup
-	fi
-	log i "Proceeding to installation"
-}

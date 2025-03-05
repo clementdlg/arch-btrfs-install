@@ -8,8 +8,36 @@ disk_part_util() {
 			${_MAIN_DISK}
 }
 
+display_warning() {
+	trap "$trap_msg" ERR
+
+	prompt="[PROMPT] Are you sure you want to proceed?"
+
+	echo "###############################################"
+	echo "####                                       ####"
+	echo "####    YOU ARE ABOUT TO WIPE YOUR DISK    ####"
+	echo "####                                       ####"
+	echo "###############################################"
+	printf "\n"
+
+	fdisk -l /dev/vda
+	printf "\n\n"
+
+	log i "YOU ARE ABOUT TO WIPE OUT $_MAIN_DISK"
+	printf "\n"
+
+	read -p "$prompt ('YES/n'): " response
+	if [[ ! "$response" == "YES" ]]; then
+		log i "You did NOT wipe ${_MAIN_DISK}"
+		cleanup
+	fi
+}
+
 partitionning_disk() {
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
+	display_warning
 
 	if [[ ! -b "$_MAIN_DISK" ]]; then
 		log e "Disk $_MAIN_DISK does not exist"
@@ -26,11 +54,13 @@ partitionning_disk() {
 
 	silent sgdisk -p $_MAIN_DISK
 
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
 
 formatting_disk() {
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
 
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
 	swap=$(fdisk -x ${_MAIN_DISK} | grep 'SWAP' | cut -d' ' -f1)
@@ -38,15 +68,15 @@ formatting_disk() {
 
 	silent mkfs.fat -F 32 $esp # create boot partition
 
-	silent mkswap $swap # create swap partition
+	silent mkswap $swap 2>/dev/null # create swap partition
 	# swapon $swap # enable swap partition
 
 	echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksFormat -d /dev/stdin $linux
-
 	echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksOpen -d /dev/stdin $linux main
 
 	silent mkfs.btrfs /dev/mapper/main
 
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
 
@@ -64,6 +94,7 @@ mount_btrfs() {
 
 mount_fs() {
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
 
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
 
@@ -90,6 +121,11 @@ mount_fs() {
 	)
 
 	[[ "${#subvols[@]}" == "${#mountpoints[@]}" ]]
+
+	# ensure mountpoint is clean
+	if mount | silent grep /mnt; then
+		umount /mnt
+	fi
 
 	# mount the filesystem
 	mount /dev/mapper/main /mnt
