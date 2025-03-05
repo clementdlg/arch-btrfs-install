@@ -8,7 +8,7 @@ bootstrap() {
 		linux \
 		linux-firmware \
 		intel-ucode \
-		vim
+		vim &>/dev/null
 
 	genfstab -U /mnt >> /mnt/etc/fstab
 

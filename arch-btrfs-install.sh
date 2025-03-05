@@ -113,7 +113,13 @@ update_state() {
 
 
 cleanup() {
-	if lsblk | awk '{ print $7 }' | grep '/mnt'; then
+	# implement a way to make shure we reformat the disk if pacstrap failed
+	# if ... something; then
+	# 	log c "pacstrap failed : wiping disk"
+	# 	wipefs ...
+	# fi
+	
+	if lsblk | awk '{ print $7 }' | silent grep '/mnt'; then
 		log c "Unmounting partitions"
 		silent umount -R /mnt
 	fi
@@ -161,11 +167,10 @@ main() {
 	# Os settings
 	bootstrap
 	set_locale
-	# false # exit script
 	host_settings
 	install_system_utils
-	systemd_services
 	add_user
+	false # exit script
 
 	# Bootloader
 	ramfs
