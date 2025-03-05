@@ -1,5 +1,6 @@
 bootstrap() {
 	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
 
 	pacstrap -K /mnt \
 		base \
@@ -11,6 +12,7 @@ bootstrap() {
 
 	genfstab -U /mnt >> /mnt/etc/fstab
 
+	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
 

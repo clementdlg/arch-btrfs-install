@@ -115,12 +115,12 @@ update_state() {
 cleanup() {
 	if lsblk | awk '{ print $7 }' | grep '/mnt'; then
 		log c "Unmounting partitions"
-		umount -R /mnt
+		silent umount -R /mnt
 	fi
 
 	if lsblk | silent grep crypt ; then
 		log c "Closing CRYPT-FS"
-		cryptsetup luksClose "$1"
+		silent cryptsetup luksClose "$1"
 	fi
 
 	log x "ARCH-INSTALL has failed safely. Chech the logs at ${_LOGFILE}"  
@@ -156,11 +156,10 @@ main() {
 	partitionning_disk
 	formatting_disk
 	mount_fs
-	false # exit script
-	####### there is not clean output after here
 
 	# Os settings
 	bootstrap
+	false # exit script
 	set_locale
 	host_settings
 	install_system_utils

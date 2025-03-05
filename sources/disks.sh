@@ -62,6 +62,7 @@ formatting_disk() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
 
+	# TODO : Replace this with global variables
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
 	swap=$(fdisk -x ${_MAIN_DISK} | grep 'SWAP' | cut -d' ' -f1)
 	linux=$(fdisk -x ${_MAIN_DISK} | grep 'LINUX' | cut -d' ' -f1)
@@ -96,7 +97,9 @@ mount_fs() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
 
+	# TODO : Replace this with global variables
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
+	linux=$(fdisk -x ${_MAIN_DISK} | grep 'LINUX' | cut -d' ' -f1)
 
 	subvols=(
 		"@"
@@ -125,6 +128,11 @@ mount_fs() {
 	# ensure mountpoint is clean
 	if mount | silent grep /mnt; then
 		umount /mnt
+	fi
+
+	# open the LUKS device if needed
+	if ! cryptsetup status /dev/mapper/main; then
+		echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksOpen -d /dev/stdin $linux main
 	fi
 
 	# mount the filesystem
