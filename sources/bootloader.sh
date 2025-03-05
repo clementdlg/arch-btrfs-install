@@ -1,5 +1,7 @@
 ramfs() {
-	# trap "$trap_msg" ERR
+	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
 	file="/etc/mkinitcpio.conf"
 
 	# MODULES
@@ -19,10 +21,15 @@ ramfs() {
 	fi
 
 	arch "mkinitcpio -p linux"
+
+	update_state "${FUNCNAME[0]}" 
+	log i "${FUNCNAME[0]} : success"
 }
 
 grub_install() {
-	# trap "$trap_msg" ERR
+	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
 	target="x86_64-efi"
 	efi="/boot"
 	id="GRUB"
@@ -32,9 +39,15 @@ grub_install() {
 	arch "grub-install --target=$target \
 		--efi-directory=$efi \
 		--bootloader-id=$id"
+
+	update_state "${FUNCNAME[0]}" 
+	log i "${FUNCNAME[0]} : success"
 }
 
 grub_cfg() {
+	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
 	file="/etc/default/grub"
 	linux=$(fdisk -x ${_MAIN_DISK} | grep 'LINUX' | cut -d' ' -f1)
 
@@ -55,17 +68,6 @@ grub_cfg() {
 		arch "echo '$replace' >> $file"
 	fi
 	
-	# key="GRUB_ENABLE_CRYPTODISK"
-	# value="y"
-	# pattern="^#?$key=.*$"
-	# replace="$key=$value"
-	#
-	# if arch grep -E "$pattern" $file ; then
-	# 	arch sed -Ei "s|$pattern|$replace|" $file
-	# else
-	# 	arch echo "$replace" >> $file
-	# fi
-
 	grub_conf="/boot/grub/grub.cfg"
 	arch "grub-mkconfig -o $grub_conf"
 
@@ -74,5 +76,8 @@ grub_cfg() {
 		--part 1 \
 		--loader "\EFI\GRUB\grubx64.efi" \
 		--label "GRUB"
+
+	update_state "${FUNCNAME[0]}" 
+	log i "${FUNCNAME[0]} : success"
 }
 

@@ -7,6 +7,8 @@
 - [ ] finish implementing the docs
     - [ ] post-install
 
+- [ ] no error handling when running commands in chroot
+
 ### safety
 - [ ] Logging
     - [ ] Log file
