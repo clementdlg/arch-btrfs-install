@@ -11,9 +11,7 @@ purple="\033[95m"
 reset="\e[0m"
 
 # This will be executed upon failure 
-trap_msg='log e "$red[LINE $LINENO][FUNCTION ${FUNCNAME[0]}]$reset \
-Failed to execute : <'\$BASH_COMMAND'>" \
-;  cleanup /dev/mapper/main;'
+trap_msg='log e "$red[LINE $LINENO][FUNCTION ${FUNCNAME[0]}]$reset Failed to execute : <'\$BASH_COMMAND'>"; cleanup'
 
 # public functions
 source_files() {
@@ -40,7 +38,7 @@ source_config() {
 }
 
 silent() {
-	"$@" >/dev/null
+	"$@" >/dev/null || return 1
 }
 
 create_workdir() {
@@ -58,9 +56,7 @@ create_workdir() {
 }
 
 arch() {
-	trap "$trap_msg" ERR
-
-	silent arch-chroot /mnt bash -c "$@"
+	silent arch-chroot /mnt bash -c "$@" || return 1
 }
 
 log() {
@@ -83,8 +79,9 @@ log() {
 
 	log="$timestamp$label $msg "
 
-	[[ ! -f ${_LOGFILE} ]] && return
-	echo "$log" >> ${_LOGFILE}
+	if [[ -f ${_LOGFILE} ]]; then
+		echo "$log" >> ${_LOGFILE}
+	fi
 }
 
 check_state() {
@@ -115,11 +112,18 @@ update_state() {
 
 
 cleanup() {
-	# implement a way to make shure we reformat the disk if pacstrap failed
-	# if ... something; then
-	# 	log c "pacstrap failed : wiping disk"
-	# 	wipefs ...
-	# fi
+
+	log d "Entering cleanup function"
+
+	state="${_WORKING_DIR}/${_STATE_FILE}"
+	# if pacstrap has failed, reformat the disk to avoid errors
+	last_state="before_pacstrap"
+	if tail -1 "$state" | silent grep "$last_state"; then
+		log c "Editing system state for recover"
+		silent sed -i '/formatting_disk/d' "$state"
+		silent sed -i '/create_btrfs_subvolumes/d' "$state"
+	fi
+
 	
 	if lsblk | awk '{ print $7 }' | silent grep '/mnt'; then
 		log c "Unmounting partitions"
@@ -128,22 +132,12 @@ cleanup() {
 
 	if lsblk | silent grep crypt ; then
 		log c "Closing CRYPT-FS"
-		silent cryptsetup luksClose "$1"
+		silent cryptsetup luksClose /dev/mapper/main
 	fi
 
 	log x "ARCH-INSTALL has failed safely. Chech the logs at ${_LOGFILE}"  
 	exit
 }
-
-# hello() {
-# 	trap "$trap_msg" ERR
-# 	check_state "${FUNCNAME[0]}" && return
-#
-# 	log i "Hello world!"
-#
-# 	update_state "${FUNCNAME[0]}" 
-# 	log i "${FUNCNAME[0]} : success"
-# }
 
 main() {
 	trap "$trap_msg" ERR
@@ -166,12 +160,15 @@ main() {
 	create_btrfs_subvolumes
 	mount_fs
 
+
 	# Os settings
+	before_pacstrap
 	bootstrap
 	set_locale
 	host_settings
 	install_system_utils
 	add_user
+
 
 	# Bootloader
 	ramfs

@@ -18,10 +18,7 @@ verify_config_keys() {
 		"_CRYPT_PASSPHRASE"
 	)
 
-	echo "##########################################"
-	echo "####        ARCH BTRFS INSTALL        ####"
-	echo "####         VERIFYING CONFIG         ####"
-	echo "##########################################"
+	log i "Verifing config file"
 
 	for key in "${valid_keys[@]}"; do
 		if env | silent grep --color=always "$key"; then

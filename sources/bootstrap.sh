@@ -1,3 +1,12 @@
+before_pacstrap() {
+	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
+	log i "Running pacstrap, this may take a while ..."
+
+	update_state "${FUNCNAME[0]}" 
+}
+
 bootstrap() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return

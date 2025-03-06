@@ -123,7 +123,6 @@ mount_btrfs() {
 
 mount_fs() {
 	trap "$trap_msg" ERR
-	check_state "${FUNCNAME[0]}" && return
 
 	# TODO : Replace this with global variables
 	esp=$(fdisk -x ${_MAIN_DISK} | grep 'ESP' | cut -d' ' -f1)
@@ -131,7 +130,7 @@ mount_fs() {
 
 	# ensure mountpoint is clean
 	if mount | silent grep /mnt; then
-		silent umount /mnt
+		silent umount -R /mnt
 	fi
 
 	# open the LUKS device if needed
@@ -146,6 +145,10 @@ mount_fs() {
 
 	silent mount --mkdir "$esp" /mnt/boot
 
+	# avoid duplicates in system.state
+	if ! check_state "${FUNCNAME[0]}"; then
+		update_state "${FUNCNAME[0]}" 
+	fi
 	log i "${FUNCNAME[0]} : success"
 }
 
