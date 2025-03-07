@@ -106,7 +106,7 @@ update_state() {
 	fstate="$_WORKING_DIR/$_STATE_FILE"
 	func_name="$1"
 
-	[[ -f "$fstate" ]] || return 1
+	[[ -f "$fstate" ]] || return 0
 
 	echo "$func_name" >> "$fstate"
 }
@@ -178,8 +178,22 @@ main() {
 
 	# finish
 	# enable_post_install
-	# safe_reboot
+	safe_reboot
 
 }
 
-main "$@"
+remount() {
+	trap "$trap_msg" ERR
+
+	# setup
+	source_config
+	source_files
+
+	mount_fs
+}
+
+if [[ -z "$@" ]]; then
+	main
+elif [[ "$1" == "--remount" ]]; then
+	remount
+fi

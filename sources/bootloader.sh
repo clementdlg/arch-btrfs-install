@@ -34,7 +34,10 @@ grub_install() {
 	efi="/boot"
 	id="GRUB"
 
-	[[ -d "/mnt$efi" ]]
+	if [[ ! -d "/mnt$efi" ]]; then
+		log e "/mnt$efi is not a valid directory"
+		return 1
+	fi
 
 	arch "grub-install --target=$target \
 		--efi-directory=$efi \
@@ -71,11 +74,12 @@ grub_cfg() {
 	grub_conf="/boot/grub/grub.cfg"
 	arch "grub-mkconfig -o $grub_conf"
 
-	efibootmgr --create \
-		--disk ${_MAIN_DISK} \
-		--part 1 \
-		--loader "\EFI\GRUB\grubx64.efi" \
-		--label "GRUB"
+	# create default entree
+	source="/mnt/boot/EFI/GRUB/grubx64.efi"
+	destination="/mnt/boot/EFI/BOOT"
+	file="BOOTx64.EFI"
+	mkdir -p "$destination"
+	cp "$source" "$destination/$file"
 
 	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
