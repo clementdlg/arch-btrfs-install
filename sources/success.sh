@@ -2,6 +2,7 @@ enable_post_install() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
 
+	# Copy post-install service
 	service="post-install.service"
 	unitfile="config/$service"
 	systemd="/mnt/etc/systemd/system"
@@ -13,7 +14,7 @@ enable_post_install() {
 
 	cp "$unitfile" "$systemd"
 
-	# TODO :Copy sources/postinstall.sh to /mnt/root
+	# Copy post install script
 	script="sources/postinstall.sh"
 	root="/mnt/root"
 
@@ -23,8 +24,13 @@ enable_post_install() {
 	fi
 
 	cp "$script" "$root"
+	chmod +x "$root/postinstall.sh"
 
-	systemctl enable "$service"
+	# enable service
+	arch "systemctl enable $service"
+
+	# reset first-boot
+	rm /mnt/etc/machine-id
 
 	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"

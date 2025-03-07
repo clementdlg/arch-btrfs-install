@@ -177,23 +177,16 @@ main() {
 	grub_cfg
 
 	# finish
-	# enable_post_install
+	enable_post_install
 	safe_reboot
 
 }
 
-remount() {
-	trap "$trap_msg" ERR
-
-	# setup
-	source_config
-	source_files
-
-	mount_fs
-}
-
 if [[ -z "$@" ]]; then
 	main
-elif [[ "$1" == "--remount" ]]; then
-	remount
+elif [[ "$1" == "--task" && ! -z "$2" ]]; then
+
+	source_config
+	source_files
+	"$2"
 fi
