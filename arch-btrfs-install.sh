@@ -24,6 +24,7 @@ source_files() {
 	source "$path/disks.sh" || false
 	source "$path/bootstrap.sh" || false
 	source "$path/bootloader.sh" || false
+	source "$path/success.sh" || false
 
 	log i "${FUNCNAME[0]} : success"
 }
@@ -135,7 +136,7 @@ cleanup() {
 		silent cryptsetup luksClose /dev/mapper/main
 	fi
 
-	log x "ARCH-INSTALL has failed safely. Chech the logs at ${_LOGFILE}"  
+	log x "ARCH-INSTALL has exited safely. Chech the logs at ${_LOGFILE}"  
 	exit
 }
 
@@ -176,9 +177,8 @@ main() {
 	grub_cfg
 
 	# finish
-	umount -R /mnt
-	reboot
-	rm -r "${_WORKDIR}"
+	# enable_post_install
+	# safe_reboot
 
 }
 
