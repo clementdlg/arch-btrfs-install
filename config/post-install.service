@@ -1,0 +1,12 @@
+[Unit]
+Description=Post Installation Script
+After=multi-user.target
+ConditionFirstBoot=yes
+
+[Service]
+Type=oneshot
+ExecStart=/root/postinstall.sh
+# RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
