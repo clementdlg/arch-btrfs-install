@@ -17,3 +17,7 @@
 - [ ] Reimplement config file properly
 
 - [ ] rewrite "remount.sh"
+
+
+- [ ] create a backup of system files that are modified
+- [ ] add option to skip disk erase prompt

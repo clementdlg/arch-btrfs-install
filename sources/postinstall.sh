@@ -41,17 +41,24 @@ take_snapshot() {
 	log i "${FUNCNAME[0]} : success"
 }
 
-# autosnap() {
-# 	trap "$trap_msg" ERR
-# 	check_state "${FUNCNAME[0]}" && return
-#
-# 	url="https://aur.archlinux.org/timeshift-autosnap.git"
-# 	# destination
-# 	git clone "$url"
-#
-# 	update_state "${FUNCNAME[0]}" 
-# 	log i "${FUNCNAME[0]} : success"
-# }
+autosnap() {
+	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
+	pkg_name="timeshift-autosnap"
+	url="https://gitlab.com/gobonja/$pkg_name.git"
+	destination="$_WORKING_DIR/$pkg_name"
+
+	mkdir -p $destination
+	git clone $url $destination
+
+    install -Dm644 "$destination/00-timeshift-autosnap.hook" /usr/share/libalpm/hooks/00-timeshift-autosnap.hook
+    install -Dm644 "$destination/timeshift-autosnap.conf" /etc/timeshift-autosnap.conf
+    install -Dm755 "$destination/timeshift-autosnap" /usr/bin/timeshift-autosnap
+
+	update_state "${FUNCNAME[0]}" 
+	log i "${FUNCNAME[0]} : success"
+}
 
 postinstall() {
 	# imported
@@ -59,9 +66,9 @@ postinstall() {
 	source_config
 	create_workdir
 
-	grub_btrfsd
-	take_snapshot
-	# autosnap
+	# grub_btrfsd
+	# take_snapshot
+	autosnap
 }
 
 postinstall
