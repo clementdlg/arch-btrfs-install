@@ -1,3 +1,17 @@
+safe_cp() {
+	# Copy post install script
+	source="$1"
+	destination="$2"
+
+	if [[ ! -f "$source" ]]; then
+		log e "file $source does not exist"
+		return 1
+	fi
+
+	mkdir -p "$destination"
+	cp "$source" "$destination"
+}
+
 enable_post_install() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
@@ -15,16 +29,18 @@ enable_post_install() {
 	cp "$unitfile" "$systemd"
 
 	# Copy post install script
-	script="sources/postinstall.sh"
-	root="/mnt/root"
+	destination="/mnt/root/post-install"
 
-	if [[ ! -f "$script" ]]; then
-		log e "file $script does not exist"
-		false
-	fi
+	source="sources/postinstall.sh"
+	safe_cp "$source" "$destination"
 
-	cp "$script" "$root"
-	chmod +x "$root/postinstall.sh"
+	source="sources/commons.sh"
+	safe_cp "$source" "$destination"
+
+	source="arch-btrfs-install.conf"
+	safe_cp "$source" "$destination"
+
+	chmod 744 "$destination/postinstall.sh"
 
 	# enable service
 	arch "systemctl enable $service"

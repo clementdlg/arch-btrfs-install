@@ -5,7 +5,7 @@ ConditionFirstBoot=yes
 
 [Service]
 Type=oneshot
-ExecStart=/root/postinstall.sh
+ExecStart=/root/post-install/postinstall.sh
 # RemainAfterExit=true
 
 [Install]
