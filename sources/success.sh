@@ -18,27 +18,28 @@ enable_post_install() {
 
 	# Copy post-install service
 	service="post-install.service"
-	unitfile="config/$service"
+	unitfile_path="$_SCRIPT_DIR/config/$service"
 	systemd="/mnt/etc/systemd/system"
 
-	if [[ ! -f "$unitfile" ]]; then
-		log e "file $unitfile does not exist"
+	if [[ ! -f "$unitfile_path" ]]; then
+		log e "file $unitfile_path does not exist"
 		false
 	fi
 
-	cp "$unitfile" "$systemd"
+	cp "$unitfile_path" "$systemd"
 
 	# Copy post install script
 	destination="/mnt/root/post-install"
 
 	source="sources/postinstall.sh"
-	safe_cp "$source" "$destination"
+
+	safe_cp "$_SCRIPT_DIR/$source" "$destination"
 
 	source="sources/commons.sh"
-	safe_cp "$source" "$destination"
+	safe_cp "$_SCRIPT_DIR/$source" "$destination"
 
 	source="arch-btrfs-install.conf"
-	safe_cp "$source" "$destination"
+	safe_cp "$_SCRIPT_DIR/$source" "$destination"
 
 	chmod 744 "$destination/postinstall.sh"
 

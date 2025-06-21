@@ -7,6 +7,8 @@ red="\e[31m"
 purple="\033[95m"
 reset="\e[0m"
 
+_SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
 # This will be executed upon failure 
 trap_msg='log e "$red[LINE $LINENO][FUNCTION ${FUNCNAME[0]}]$reset Failed to execute : <'\$BASH_COMMAND'>"; cleanup'
 
@@ -14,7 +16,7 @@ source_config() {
 	trap "$trap_msg" ERR
 
 	local config="arch-btrfs-install.conf"
-	source "$config"
+	source "$_SCRIPT_DIR/$config"
 
 	log i "${FUNCNAME[0]} : success"
 }

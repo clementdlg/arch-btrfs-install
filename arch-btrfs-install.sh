@@ -10,6 +10,8 @@ red="\e[31m"
 purple="\033[95m"
 reset="\e[0m"
 
+_SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
 # This will be executed upon failure 
 trap_msg='log e "$red[LINE $LINENO][FUNCTION ${FUNCNAME[0]}]$reset Failed to execute : <'\$BASH_COMMAND'>"; cleanup'
 
@@ -17,7 +19,7 @@ trap_msg='log e "$red[LINE $LINENO][FUNCTION ${FUNCNAME[0]}]$reset Failed to exe
 source_files() {
 	trap "$trap_msg" ERR
 
-	path="sources"
+	path="$_SCRIPT_DIR/sources"
 	[[ -d "$path" ]]
 
 	source "$path/prerequisits.sh" || false
@@ -33,7 +35,7 @@ source_config() {
 	trap "$trap_msg" ERR
 
 	local config="arch-btrfs-install.conf"
-	source "$config"
+	source "$_SCRIPT_DIR/$config"
 
 	log i "${FUNCNAME[0]} : success"
 }
@@ -147,6 +149,7 @@ main() {
 	source_config
 	source_files
 	create_workdir
+	display_warning
 
 	# Prerequisits
 	verify_config_keys
@@ -184,7 +187,7 @@ main() {
 
 if [[ -z "$@" ]]; then
 	main
-elif [[ "$1" == "--task" && ! -z "$2" ]]; then
+elif [[ "$1" == "--task" && -n "$2" ]]; then
 
 	source_config
 	source_files

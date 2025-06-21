@@ -65,8 +65,6 @@ partitionning_disk() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
 
-	display_warning
-
 	if [[ ! -b "$_MAIN_DISK" ]]; then
 		log e "Disk $_MAIN_DISK does not exist"
 		false
