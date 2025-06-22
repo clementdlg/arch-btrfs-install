@@ -180,7 +180,6 @@ main() {
 	grub_cfg
 
 	# finish
-	enable_post_install
 	safe_reboot
 
 }
