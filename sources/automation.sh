@@ -1,3 +1,24 @@
+configure_timeshift() {
+	trap "$trap_msg" ERR
+	check_state "${FUNCNAME[0]}" && return
+
+	prefix="/mnt"
+	config="timeshift.json"
+	config_path="$prefix/etc/timeshift/$config"
+	dev_uuid="$(blkid | grep "/dev/mapper/main" | cut '-d"' -f2)"
+	parent_uuid="$(blkid -t PARTLABEL="LINUX" | cut '-d"' -f2)"
+
+	# copy timeshift config
+	install -Dm644 "$_SCRIPT_DIR/files/$config" "$config_path"
+
+	# set default backup device
+	sed -i "s/MY_BACKUP_UUID_HERE/$dev_uuid/" "$config_path"
+	sed -i "s/MY_PARENT_UUID_HERE/$parent_uuid/" "$config_path"
+
+	update_state "${FUNCNAME[0]}" 
+	log i "${FUNCNAME[0]} : success"
+}
+
 grub_btrfsd() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
@@ -18,6 +39,7 @@ install_autosnap() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
 
+	# TODO:: just copy the files over. Only the script needs to be pulled from internet
 	pkg_name="timeshift-autosnap"
 	url="https://gitlab.com/gobonja/$pkg_name.git"
 	repo_path="$_WORKING_DIR/$pkg_name"
@@ -45,6 +67,7 @@ configure_autosnap() {
 	config="$prefix/etc/timeshift-autosnap.conf"
 	hook="$prefix/usr/share/libalpm/hooks/00-timeshift-autosnap.hook"
 
+	# TODO: remove the 4 sed and just copy the file at the right place in the previous function
 	# set max snapshots to 15
 	sed -i 's/maxSnapshots=.*/maxSnapshots=15/' "$config"
 

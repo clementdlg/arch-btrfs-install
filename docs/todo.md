@@ -5,6 +5,8 @@
     - [ ] Option to skip cryptsetup
     - [ ] CPU type (intel/amd ucode)
     - [ ] partition sizes
+- [ ] reimplement automation.sh
+    - [ ] have config file and hook as file ready to copy/paste
 
 ### safety
 - [ ] apply strict verification on config file values

@@ -181,9 +181,10 @@ main() {
 	grub_cfg
 
 	# automation
+	configure_timeshift
 	grub_btrfsd
 	install_autosnap
-	# configure_autosnap
+	configure_autosnap
 
 	# finish
 	safe_reboot
