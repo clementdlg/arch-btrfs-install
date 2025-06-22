@@ -26,6 +26,7 @@ source_files() {
 	source "$path/disks.sh" || false
 	source "$path/bootstrap.sh" || false
 	source "$path/bootloader.sh" || false
+	source "$path/automation.sh" || false
 	source "$path/success.sh" || false
 
 	log i "${FUNCNAME[0]} : success"
@@ -178,6 +179,11 @@ main() {
 	ramfs
 	grub_install
 	grub_cfg
+
+	# automation
+	grub_btrfsd
+	install_autosnap
+	# configure_autosnap
 
 	# finish
 	safe_reboot

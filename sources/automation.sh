@@ -1,30 +1,14 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
-
-# debug
-date="$(date)"
-echo "post install $date" > /root/post-inst.log
-
-# set working directory
-path="/root/post-install"
-cd "$path"
-
-# public functions
-source_files() {
-	source "$path/commons.sh" || false
-
-	echo "${FUNCNAME[0]} : success"
-}
-
 grub_btrfsd() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
 
-	file="/usr/lib/systemd/system/grub-btrfsd.service"
+	file="/mnt/usr/lib/systemd/system/grub-btrfsd.service"
+
+	[[ -f "$file" ]]
+
 	sed -i '/^ExecStart=/s| /.snapshots| --timeshift-auto|' "$file"
 	
-	systemctl enable --now grub-btrfsd
+	arch "systemctl enable grub-btrfsd"
 
 	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
@@ -36,14 +20,18 @@ install_autosnap() {
 
 	pkg_name="timeshift-autosnap"
 	url="https://gitlab.com/gobonja/$pkg_name.git"
-	destination="$_WORKING_DIR/$pkg_name"
+	repo_path="$_WORKING_DIR/$pkg_name"
+	prefix="/mnt"
+	hook="00-$pkg_name.hook"
 
-	mkdir -p "$destination"
-	git clone "$url" "$destination"
+	silent pacman -S git --noconfirm
 
-    install -Dm644 "$destination/00-timeshift-autosnap.hook" /usr/share/libalpm/hooks/00-timeshift-autosnap.hook
-    install -Dm644 "$destination/timeshift-autosnap.conf" /etc/timeshift-autosnap.conf
-    install -Dm755 "$destination/timeshift-autosnap" /usr/bin/timeshift-autosnap
+	mkdir -p "$repo_path"
+	git clone "$url" "$repo_path"
+
+    install -Dm644 "$repo_path/$hook" "$prefix/usr/share/libalpm/hooks/$hook"
+    install -Dm644 "$repo_path/$pkg_name.conf" "$prefix/etc/$pkg_name.conf"
+    install -Dm755 "$repo_path/$pkg_name" "$prefix/usr/bin/$pkg_name"
 
 	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
@@ -53,46 +41,22 @@ configure_autosnap() {
 	trap "$trap_msg" ERR
 	check_state "${FUNCNAME[0]}" && return
 
-	autosnap_conf="/etc/timeshift-autosnap.conf"
-	autosnap_hook="/usr/share/libalpm/hooks/00-timeshift-autosnap.hook"
+	prefix="/mnt"
+	config="$prefix/etc/timeshift-autosnap.conf"
+	hook="$prefix/usr/share/libalpm/hooks/00-timeshift-autosnap.hook"
 
 	# set max snapshots to 15
-	sed -i 's/maxSnapshots=.*/maxSnapshots=15/' "$autosnap_conf"
+	sed -i 's/maxSnapshots=.*/maxSnapshots=15/' "$config"
 
 	# set update grub to false to avoid conflicts
-	sed -i 's/updateGrub=.*/updateGrub=false/' "$autosnap_conf"
+	sed -i 's/updateGrub=.*/updateGrub=false/' "$config"
 
 	# add snapshots triggers
-	sed -i '/^Operation = Upgrade$/a Operation = Install\nOperation = Remove' "$autosnap_hook"
+	sed -i '/^Operation = Upgrade$/a Operation = Install\nOperation = Remove' "$hook"
 
 	# change description
-	sed -i '/^Description =/s/upgrade/transaction/' "$autosnap_hook"
+	sed -i '/^Description =/s/upgrade/transaction/' "$hook"
 	
 	update_state "${FUNCNAME[0]}" 
 	log i "${FUNCNAME[0]} : success"
 }
-
-take_snapshot() {
-	trap "$trap_msg" ERR
-	check_state "${FUNCNAME[0]}" && return
-
-	comment="FIRST BOOT"
-	timeshift --create --comments "$comment" --tags D
-
-	update_state "${FUNCNAME[0]}" 
-	log i "${FUNCNAME[0]} : success"
-}
-
-postinstall() {
-	# imported
-	source_files
-	source_config
-	create_workdir
-
-	grub_btrfsd
-	install_autosnap
-	configure_autosnap
-	take_snapshot
-}
-
-postinstall
