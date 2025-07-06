@@ -96,7 +96,7 @@ formatting_disk() {
 	silent mkfs.fat -F 32 $esp # create boot partition
 
 	silent mkswap $swap 2>/dev/null # create swap partition
-	# swapon $swap # enable swap partition
+	swapon $swap # enable swap partition
 
 	echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksFormat -d /dev/stdin $linux
 	echo -n "$_CRYPT_PASSPHRASE" | silent cryptsetup luksOpen -d /dev/stdin $linux main

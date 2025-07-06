@@ -1,6 +1,5 @@
 ## TODO
 ### features
-- [ ] add timeshift config file
 - [ ] implement the logic for the config file
     - [ ] Option to skip cryptsetup
     - [ ] CPU type (intel/amd ucode)
