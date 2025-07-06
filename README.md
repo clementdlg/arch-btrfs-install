@@ -1,7 +1,5 @@
 # arch-btrfs-install
 
-## WARNING : this is a work in progress
-
 ## Documentation
 - I wrote this documentation to help me write this tool, 
 - this is basically the relevant arch wiki articles put together in the appropriate order
@@ -19,7 +17,7 @@ git clone https://github.com/clementdlg/arch-btrfs-install
 
 - Edit the configuration file. 
 ```bash
-nano arch-btrfs-install.conf
+vim arch-btrfs-install.conf
 ```
 
 - Run the script :
