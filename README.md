@@ -1,6 +1,6 @@
 # arch-btrfs-install
 
-## WARNING : this is a work in progress
+## WARNING : this is the bleeding-edge branch. See v1.0 branch
 
 ## Documentation
 - I wrote this documentation to help me write this tool, 
